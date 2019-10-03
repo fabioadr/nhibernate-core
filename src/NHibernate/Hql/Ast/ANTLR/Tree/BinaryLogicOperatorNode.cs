@@ -200,21 +200,21 @@ namespace NHibernate.Hql.Ast.ANTLR.Tree
 			return embeddedParameters.ToArray();
 		}
 
-		private string Translate(int valueElements, string comparisonText, string[] lhsElementTexts, string[] rhsElementTexts)
+		private protected string Translate(int valueElements, string comparisonText, string[] lhsElementTexts, string[] rhsElementTexts)
 		{
-			var multicolumnComparisonClauses = new List<string>();
+			var multicolumnComparisonClauses = new string[valueElements];
 			for (int i = 0; i < valueElements; i++)
 			{
-				multicolumnComparisonClauses.Add(string.Format("{0} {1} {2}", lhsElementTexts[i], comparisonText, rhsElementTexts[i]));
+				multicolumnComparisonClauses[i] = string.Join(" ", lhsElementTexts[i], comparisonText, rhsElementTexts[i]);
 			}
-			return "(" + string.Join(" and ", multicolumnComparisonClauses.ToArray()) + ")";
+			return string.Concat("(", string.Join(" and ", multicolumnComparisonClauses), ")");
 		}
 
-		private static string[] ExtractMutationTexts(IASTNode operand, int count) 
+		private protected static string[] ExtractMutationTexts(IASTNode operand, int count) 
 		{
-			if ( operand is ParameterNode ) 
+			if ( operand is ParameterNode )
 			{
-				return Enumerable.Repeat("?", count).ToArray();
+				return ArrayHelper.Fill("?", count);
 			}
 			if (operand is SqlNode)
 			{
@@ -276,19 +276,19 @@ namespace NHibernate.Hql.Ast.ANTLR.Tree
 				return;
 			}
 
-			if (rhsNode is IdentNode && lhsNode.DataType is IMetaType lhsNodeMetaType)
+			if (rhsNode is IdentNode && lhsNode.DataType is MetaType lhsNodeMetaType)
 			{
 				EvaluateType(rhsNode, lhsNodeMetaType);
 				return;
 			}
 
-			if (lhsNode is IdentNode && rhsNode.DataType is IMetaType rhsNodeMetaType)
+			if (lhsNode is IdentNode && rhsNode.DataType is MetaType rhsNodeMetaType)
 			{
 				EvaluateType(lhsNode, rhsNodeMetaType);
 			}
 		}
 
-		private void EvaluateType(SqlNode node, IMetaType metaType)
+		private void EvaluateType(SqlNode node, MetaType metaType)
 		{
 			var sessionFactory = SessionFactoryHelper.Factory;
 

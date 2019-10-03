@@ -22,7 +22,7 @@ namespace NHibernate.Multi
 		private CacheMode? _cacheMode;
 		private IList<TResult> _finalResults;
 
-		protected class QueryInfo : ICachingInformation
+		protected class QueryInfo : ICachingInformation, ICachingInformationWithFetches
 		{
 			/// <summary>
 			/// The query loader.
@@ -55,6 +55,9 @@ namespace NHibernate.Multi
 			// is enabled).
 			/// <inheritdoc />
 			public IType[] ResultTypes => Loader.ResultTypes;
+
+			/// <inheritdoc />
+			public IType[] CacheTypes => Loader.CacheTypes;
 
 			/// <inheritdoc />
 			public string QueryIdentifier => Loader.QueryIdentifier;
@@ -214,6 +217,11 @@ namespace NHibernate.Multi
 					var lockModeArray = loader.GetLockModes(queryParameters.LockModes);
 					var optionalObjectKey = Loader.Loader.GetOptionalObjectKey(queryParameters, Session);
 					var tmpResults = new List<object>();
+					var queryCacheBuilder = new QueryCacheResultBuilder(loader);
+					var cacheBatcher = queryInfo.CacheBatcher;
+					var ownCacheBatcher = cacheBatcher == null;
+					if (ownCacheBatcher)
+						cacheBatcher = new CacheBatcher(Session);
 
 					for (var count = 0; count < maxRows && reader.Read(); count++)
 					{
@@ -229,7 +237,9 @@ namespace NHibernate.Multi
 								hydratedObjects[i],
 								keys,
 								true,
-								forcedResultTransformer
+								forcedResultTransformer,
+								queryCacheBuilder,
+								(persister, data) => cacheBatcher.AddToBatch(persister, data)
 							);
 						if (loader.IsSubselectLoadingEnabled)
 						{
@@ -242,7 +252,10 @@ namespace NHibernate.Multi
 
 					queryInfo.Result = tmpResults;
 					if (queryInfo.CanPutToCache)
-						queryInfo.ResultToCache = tmpResults;
+						queryInfo.ResultToCache = queryCacheBuilder.Result;
+
+					if (ownCacheBatcher)
+						cacheBatcher.ExecuteBatch();
 
 					reader.NextResult();
 				}
@@ -268,6 +281,12 @@ namespace NHibernate.Multi
 
 				if (queryInfo.IsCacheable)
 				{
+					if (queryInfo.IsResultFromCache)
+					{
+						var queryCacheBuilder = new QueryCacheResultBuilder(queryInfo.Loader);
+						queryInfo.Result = queryCacheBuilder.GetResultList(queryInfo.Result);
+					}
+
 					// This transformation must not be applied to ResultToCache.
 					queryInfo.Result =
 						queryInfo.Loader.TransformCacheableResults(

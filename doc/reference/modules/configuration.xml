@@ -907,6 +907,25 @@ var session = sessions.OpenSession(conn);
                     </row>
                     <row>
                         <entry>
+                            <literal>transaction.auto_join</literal>
+                        </entry>
+                        <entry>
+                            Should sessions check on every operation whether there is an ongoing system transaction or not, and enlist
+                            into it if any?
+                            <para>
+                                Default is <literal>true</literal>. It can also be controlled at session opening, with
+                                <literal>ISessionFactory.WithOptions</literal>. A session can also be instructed to explicitly join the current
+                                transaction by calling <literal>ISession.JoinTransaction</literal>. This setting has no effect when using a
+                                transaction factory that is not system transactions aware.
+                            </para>
+                            <para>
+                                <emphasis role="strong">eg.</emphasis>
+                                <literal>false</literal>
+                            </para>
+                        </entry>
+                    </row>
+                    <row>
+                        <entry>
                             <literal>default_flush_mode</literal>
                         </entry>
                         <entry>
@@ -1003,6 +1022,28 @@ var session = sessions.OpenSession(conn);
                             is used instead of <literal>DbType.DateTime</literal>. This may be disabled by setting
                             <literal>sql_types.keep_datetime</literal> to <literal>true</literal>.
                             Defaults to <literal>false</literal>.
+                            <para>
+                                <emphasis role="strong">eg.</emphasis>
+                                <literal>true</literal> | <literal>false</literal>
+                            </para>
+                        </entry>
+                    </row>
+                    <row>
+                        <entry>
+                            <literal>firebird.disable_parameter_casting</literal>
+                        </entry>
+                        <entry>
+                            <para>
+                                Firebird with FirebirdSql.Data.FirebirdClient may be unable to determine the type
+                                of parameters in many circumstances, unless they are explicitly casted in the SQL
+                                query. To avoid this trouble, the NHibernate <literal>FirebirdClientDriver</literal> parses SQL
+                                commands for detecting parameters in them and adding an explicit SQL cast around
+                                parameters which may trigger the issue.
+                            </para>
+                            <para>
+                                Defaults to <literal>false</literal>.
+                                For disabling this behavior, set this setting to true.
+                            </para>
                             <para>
                                 <emphasis role="strong">eg.</emphasis>
                                 <literal>true</literal> | <literal>false</literal>

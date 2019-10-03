@@ -17,7 +17,7 @@ namespace NHibernate.Type
 {
 	using System.Threading.Tasks;
 	using System.Threading;
-	public partial class ClassMetaType : AbstractType, IMetaType
+	public partial class ClassMetaType : AbstractType
 	{
 
 		public override Task<object> NullSafeGetAsync(DbDataReader rs, string[] names, ISessionImplementor session, object owner, CancellationToken cancellationToken)
@@ -26,7 +26,14 @@ namespace NHibernate.Type
 			{
 				return Task.FromCanceled<object>(cancellationToken);
 			}
-			return NullSafeGetAsync(rs, names[0], session, owner, cancellationToken);
+			try
+			{
+				return NullSafeGetAsync(rs, names[0], session, owner, cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
 		}
 
 		public override Task<object> NullSafeGetAsync(DbDataReader rs,string name,ISessionImplementor session,object owner, CancellationToken cancellationToken)

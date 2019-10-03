@@ -74,6 +74,22 @@ namespace NHibernate.Hql.Ast
 			return new HqlSelectFrom(_factory, @from);
 		}
 
+		public HqlFrom From(HqlRange range, params HqlJoin[] joins)
+		{
+			var hqlFrom = new HqlFrom(_factory, range);
+			foreach (var join in joins)
+				hqlFrom.AddChild(join);
+			return hqlFrom;
+		}
+
+		public HqlFrom From(HqlRange range, IEnumerable<HqlJoin>  joins)
+		{
+			var hqlFrom = new HqlFrom(_factory, range);
+			foreach (var join in joins)
+				hqlFrom.AddChild(join);
+			return hqlFrom;
+		}
+
 		public HqlFrom From(HqlRange range)
 		{
 			return new HqlFrom(_factory, range);
@@ -475,6 +491,11 @@ namespace NHibernate.Hql.Ast
 		public HqlLeftFetchJoin LeftFetchJoin(HqlExpression expression, HqlAlias @alias)
 		{
 			return new HqlLeftFetchJoin(_factory, expression, @alias);
+		}
+
+		public HqlFetch Fetch()
+		{
+			return new HqlFetch(_factory);
 		}
 
 		public HqlClass Class()

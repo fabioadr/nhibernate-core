@@ -317,14 +317,15 @@ namespace NHibernate.Linq.Functions
 
 	public class ToStringHqlGeneratorForMethod : IHqlGeneratorForMethod
 	{
-		public IEnumerable<MethodInfo> SupportedMethods
-		{
-			get { throw new NotSupportedException(); }
-		}
+		public IEnumerable<MethodInfo> SupportedMethods => throw new NotSupportedException();
 
 		public HqlTreeNode BuildHql(MethodInfo method, Expression targetObject, ReadOnlyCollection<Expression> arguments, HqlTreeBuilder treeBuilder, IHqlExpressionVisitor visitor)
 		{
-			return treeBuilder.MethodCall("str", visitor.Visit(targetObject).AsExpression());
+			var methodName = targetObject.Type == typeof(Guid) || targetObject.Type == typeof(Guid?)
+				? "strguid"
+				: "str";
+
+			return treeBuilder.MethodCall(methodName, visitor.Visit(targetObject).AsExpression());
 		}
 	}
 }

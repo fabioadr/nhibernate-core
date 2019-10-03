@@ -1,8 +1,10 @@
 ﻿projects:
 - filePath: NHibernate/NHibernate.csproj
-  targetFramework: net461
+  targetFramework: netcoreapp2.0
   concurrentRun: true
   applyChanges: true
+  suppressDiagnosticFailures:
+  - pattern: ^.*(Hql\.g).*$
   analyzation:
     methodConversion:
     - conversion: Ignore
@@ -114,6 +116,8 @@
       rule: EventListener
     - conversion: ToAsync
       rule: Cache
+    - conversion: ToAsync
+      rule: TransactionCompletion      
     typeConversion:
     - conversion: Ignore
       name: EnumerableImpl
@@ -141,6 +145,7 @@
       requiresCancellationToken:
       - rule: EventListener
       - rule: Cache
+      - rule: TransactionCompletion
     scanMethodBody: true
     scanForMissingAsyncMembers:
     - all: true
@@ -163,45 +168,29 @@
   - type: AsyncGenerator.Core.Plugins.EmptyRegionRemover
     assemblyName: AsyncGenerator.Core
 - filePath: NHibernate.DomainModel/NHibernate.DomainModel.csproj
-  targetFramework: net461
+  targetFramework: netcoreapp2.0
   concurrentRun: true
   applyChanges: true
+  suppressDiagnosticFailures:
+  - pattern: ^.*(Hql\.g).*$
   analyzation:
     scanMethodBody: true
     scanForMissingAsyncMembers:
     - all: true
 - filePath: NHibernate.Test/NHibernate.Test.csproj
-  targetFramework: net461
+  targetFramework: netcoreapp2.0
   concurrentRun: true
   applyChanges: true
+  suppressDiagnosticFailures:
+  - pattern: ^.*(Hql\.g).*$
   analyzation:
     methodConversion:
     - conversion: Copy
       name: AfterTransactionCompletionProcess_EvictsFromCache
-    - conversion: Copy
-      hasAttributeName: OneTimeSetUpAttribute
-    - conversion: Copy
-      hasAttributeName: OneTimeTearDownAttribute
-    - conversion: Copy
-      hasAttributeName: SetUpAttribute
-    - conversion: Copy
-      hasAttributeName: TearDownAttribute
-    - conversion: Smart
-      hasAttributeName: TestAttribute
-    - conversion: Smart
-      hasAttributeName: TheoryAttribute
     asyncExtensionMethods:
       projectFiles:
       - fileName: LinqExtensionMethods.cs
         projectName: NHibernate
-    preserveReturnType:
-    - hasAttributeName: TestAttribute
-    - hasAttributeName: TheoryAttribute
-    alwaysAwait:
-    - hasAttributeName: TestAttribute
-    - hasAttributeName: TheoryAttribute
-    - hasAttributeName: SetUpAttribute
-    - hasAttributeName: TearDownAttribute
     typeConversion:
     - conversion: Ignore
       name: ObjectAssert
@@ -212,31 +201,24 @@
     - conversion: Ignore
       name: PeVerifier
     - conversion: Ignore
-      hasAttributeName: IgnoreAttribute
-    - conversion: NewType
-      hasAttributeName: TestFixtureAttribute
-    - conversion: NewType
-      anyBaseTypeRule: HasTestFixtureAttribute
-    - conversion: Ignore
       rule: IsTestCase
     - conversion: Ignore
       anyBaseTypeRule: IsTestCase
-    ignoreSearchForMethodReferences:
-    - hasAttributeName: TheoryAttribute
-    - hasAttributeName: TestAttribute
+      executionPhase: PostProviders
     ignoreDocuments:
     - filePathEndsWith: Linq/MathTests.cs
     - filePathEndsWith: Linq/ExpressionSessionLeakTest.cs
     - filePathEndsWith: Linq/NorthwindDbCreator.cs
     cancellationTokens:
-      withoutCancellationToken:
-      - hasAttributeName: TestAttribute
-      - hasAttributeName: TheoryAttribute
+      enabled: true
     scanMethodBody: true
     scanForMissingAsyncMembers:
     - all: true
   registerPlugin:
-  - type: AsyncGenerator.Core.Plugins.NUnitAsyncCounterpartsFinder
+  - type: AsyncGenerator.Core.Plugins.NUnitPlugin
+    parameters:
+    - name: createNewTypes
+      value: true
     assemblyName: AsyncGenerator.Core
   - type: AsyncGenerator.Core.Plugins.TransactionScopeAsyncFlowAdder
     assemblyName: AsyncGenerator.Core
@@ -273,14 +255,21 @@ methodRules:
     name: Lock
   - containingType: NHibernate.Cache.ICache
     name: Unlock
-  - containingType: NHibernate.Cache.IBatchableReadOnlyCache
-  - containingType: NHibernate.Cache.IBatchableCache
   name: Cache
+- filters:
+  - containingType: NHibernate.Action.IAfterTransactionCompletionProcess
+  - containingType: NHibernate.Action.IBeforeTransactionCompletionProcess
+  - containingType: NHibernate.Action.EntityAction
+    name: BeforeTransactionCompletionProcessImpl  
+  name: TransactionCompletion
 - filters:
   - containingNamespace: NHibernate
   - containingType: NHibernate.Tool.hbm2ddl.SchemaUpdate
   - containingType: NHibernate.Tool.hbm2ddl.SchemaValidator
   - containingType: NHibernate.Tool.hbm2ddl.SchemaExport
+  - containingType: NHibernate.Linq.DmlExtensionMethods
+  - containingType: NHibernate.Linq.InsertBuilder<TSource, TTarget>
+  - containingType: NHibernate.Linq.UpdateBuilder<TSource>
   name: PubliclyExposedType
 - filters:
   - hasAttributeName: ObsoleteAttribute
@@ -292,6 +281,3 @@ typeRules:
 - filters:
   - name: TestCase
   name: IsTestCase
-- filters:
-  - hasAttributeName: TestFixtureAttribute
-  name: HasTestFixtureAttribute

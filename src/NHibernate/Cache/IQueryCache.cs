@@ -18,9 +18,12 @@ namespace NHibernate.Cache
 	public partial interface IQueryCache
 	{
 		/// <summary>
-		/// The underlying <see cref="ICache"/>.
+		/// The underlying <see cref="CacheBase"/>.
 		/// </summary>
+		// 6.0 TODO: type as CacheBase instead
+#pragma warning disable 618
 		ICache Cache { get; }
+#pragma warning restore 618
 
 		/// <summary>
 		/// The cache region.
@@ -41,8 +44,11 @@ namespace NHibernate.Cache
 		IList Get(QueryKey key, ICacheAssembler[] returnTypes, bool isNaturalKeyLookup, ISet<string> spaces, ISessionImplementor session);
 
 		/// <summary>
-		/// Clean up all resources.
+		/// Clean up resources.
 		/// </summary>
+		/// <remarks>
+		/// This method should not destroy <see cref="Cache" />. The session factory is responsible for it.
+		/// </remarks>
 		void Destroy();
 	}
 
